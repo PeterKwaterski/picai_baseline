@@ -1,0 +1,4 @@
+.git
+*.sif
+*.tar.gz
+__pycache__/

@@ -11,7 +11,7 @@
 ./build.sh
 ```
 
-This applies `patch_packaging_sklearn.sh` to nnUNet after clone (fixes deprecated `sklearn` PyPI package) and tags `PeterKwaterski/picai_nnunet:latest`.
+This applies `patch_packaging_sklearn.sh` to nnUNet after clone (fixes deprecated `sklearn` PyPI package), installs runtime deps via **`install_nnunet_runtime_deps.sh`** (pinned **`pip_constraints.txt`**, then `pip install --no-deps -e nnUNet` to avoid broken PyPI `python-gdcm` source builds), and does **not** upgrade pip.
 
 ## Custom forks / refs
 

@@ -24,20 +24,21 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 COPY patch_packaging_sklearn.sh /tmp/patch_packaging_sklearn.sh
+COPY install_nnunet_runtime_deps.sh /tmp/install_nnunet_runtime_deps.sh
+COPY pip_constraints.txt /tmp/pip_constraints.txt
 ARG NNUNET_GIT_URL
 ARG NNUNET_GIT_REF
 ARG HIDDENLAYER_GIT_URL
 ARG HIDDENLAYER_GIT_REF
-RUN chmod +x /tmp/patch_packaging_sklearn.sh && \
+RUN sed -i 's/\r$//' /tmp/patch_packaging_sklearn.sh /tmp/install_nnunet_runtime_deps.sh && \
+    chmod +x /tmp/patch_packaging_sklearn.sh /tmp/install_nnunet_runtime_deps.sh && \
     git config --global advice.detachedHead false && \
     git clone "${NNUNET_GIT_URL}" /home/user/nnunet && \
     git -C /home/user/nnunet checkout "${NNUNET_GIT_REF}" && \
     /tmp/patch_packaging_sklearn.sh /home/user/nnunet && \
     chown -R user /home/user/nnunet && \
-    pip3 install --upgrade 'pip<24' && \
-    pip3 install 'scikit-learn>=1.0.2,<1.3' && \
-    pip3 install \
-        -e /home/user/nnunet \
+    /tmp/install_nnunet_runtime_deps.sh /tmp/pip_constraints.txt /home/user/nnunet && \
+    pip3 install -c /tmp/pip_constraints.txt \
         graphviz \
         "git+${HIDDENLAYER_GIT_URL}@${HIDDENLAYER_GIT_REF}#egg=hiddenlayer" \
         carbontracker && \
@@ -54,7 +55,7 @@ ARG PICAI_GIT_ORG
 ARG PICAI_BASELINE_REF
 ARG REPORT_GUIDED_ANNOTATION_GIT_URL
 ARG REPORT_GUIDED_ANNOTATION_GIT_REF
-RUN pip3 install \
+RUN pip3 install -c /tmp/pip_constraints.txt \
     picai_eval==1.4.4 \
     picai_prep==2.1.2 \
     "git+https://github.com/${PICAI_GIT_ORG}/picai_baseline.git@${PICAI_BASELINE_REF}" \

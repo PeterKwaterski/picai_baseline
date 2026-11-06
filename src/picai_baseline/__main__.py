@@ -18,6 +18,7 @@ import os
 from picai_baseline.prepare_data import prepare_data
 from picai_baseline.prepare_data_semi_supervised import \
     prepare_data_semi_supervised
+from picai_baseline.prepare_data_v2 import prepare_data_v2
 
 if __name__ == '__main__':
     # Set up command line arguments
@@ -68,6 +69,18 @@ if __name__ == '__main__':
     parser.add_argument("--task", type=str, default="Task2201_picai_baseline",
                         help="Task name (default: Task2201_picai_baseline)")
     parser.set_defaults(func=prepare_data)
+
+    parser = subparsers.add_parser('prepare_data_v2')
+    parser.add_argument("--workdir", type=str, default=os.environ.get("workdir", "/workdir"))
+    parser.add_argument("--inputdir", type=str, default=os.environ.get("inputdir", "/input"))
+    parser.add_argument("--imagesdir", type=str, default="images")
+    parser.add_argument("--labelsdir", type=str, default="picai_labels")
+    parser.add_argument("--spacing", type=float, nargs="+", required=False)
+    parser.add_argument("--matrix_size", type=int, nargs="+", required=False)
+    parser.add_argument("--preprocessing_kwargs", type=str, required=False)
+    parser.add_argument("--splits", type=str, default="picai_pub_nnunet")
+    parser.add_argument("--task", type=str, default="Dataset220_PICAI")
+    parser.set_defaults(func=prepare_data_v2)
 
     try:
         args = argparser.parse_args()
