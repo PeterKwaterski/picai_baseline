@@ -1,6 +1,16 @@
 # Adapted from https://github.com/DIAGNijmegen/diag-nnunet/blob/master/Dockerfile
 FROM nvcr.io/nvidia/pytorch:20.12-py3
 
+# Override at build time, e.g. --build-arg NNUNET_GIT_URL=https://github.com/You/nnUNet.git
+ARG NNUNET_GIT_URL=https://github.com/DIAGNijmegen/nnUNet.git
+ARG NNUNET_GIT_REF=1.7.0-3
+ARG PICAI_GIT_ORG=PeterKwaterski
+ARG PICAI_BASELINE_REF=main
+ARG REPORT_GUIDED_ANNOTATION_GIT_URL=https://github.com/DIAGNijmegen/Report-Guided-Annotation.git
+ARG REPORT_GUIDED_ANNOTATION_GIT_REF=main
+ARG HIDDENLAYER_GIT_URL=https://github.com/nanohanno/hiddenlayer.git
+ARG HIDDENLAYER_GIT_REF=bugfix/get_trace_graph
+
 RUN groupadd -r user && useradd -m --no-log-init -r -g user user
 
 # Configuration
@@ -12,14 +22,24 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends graphviz && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
-RUN git config --global advice.detachedHead false && \
-    git clone https://github.com/DIAGNijmegen/nnUNet.git /home/user/nnunet && \
-    git -C /home/user/nnunet checkout 1.7.0-3 && \
+
+COPY patch_packaging_sklearn.sh /tmp/patch_packaging_sklearn.sh
+ARG NNUNET_GIT_URL
+ARG NNUNET_GIT_REF
+ARG HIDDENLAYER_GIT_URL
+ARG HIDDENLAYER_GIT_REF
+RUN chmod +x /tmp/patch_packaging_sklearn.sh && \
+    git config --global advice.detachedHead false && \
+    git clone "${NNUNET_GIT_URL}" /home/user/nnunet && \
+    git -C /home/user/nnunet checkout "${NNUNET_GIT_REF}" && \
+    /tmp/patch_packaging_sklearn.sh /home/user/nnunet && \
     chown -R user /home/user/nnunet && \
+    pip3 install --upgrade 'pip<24' && \
+    pip3 install 'scikit-learn>=1.0.2,<1.3' && \
     pip3 install \
         -e /home/user/nnunet \
         graphviz \
-        git+https://github.com/nanohanno/hiddenlayer.git@bugfix/get_trace_graph#egg=hiddenlayer \
+        "git+${HIDDENLAYER_GIT_URL}@${HIDDENLAYER_GIT_REF}#egg=hiddenlayer" \
         carbontracker && \
     rm -rf ~/.cache/pip
 
@@ -30,11 +50,17 @@ RUN SITE_PKG=`pip3 show nnunet | grep "Location:" | awk '{print $2}'` && \
 
 
 # Install PI-CAI repositories
+ARG PICAI_GIT_ORG
+ARG PICAI_BASELINE_REF
+ARG REPORT_GUIDED_ANNOTATION_GIT_URL
+ARG REPORT_GUIDED_ANNOTATION_GIT_REF
 RUN pip3 install \
     picai_eval==1.4.4 \
     picai_prep==2.1.2 \
-    picai_baseline==0.8.2 \
-    mlxtend==0.19.0
+    "git+https://github.com/${PICAI_GIT_ORG}/picai_baseline.git@${PICAI_BASELINE_REF}" \
+    "git+${REPORT_GUIDED_ANNOTATION_GIT_URL}@${REPORT_GUIDED_ANNOTATION_GIT_REF}" \
+    mlxtend==0.19.0 && \
+    rm -rf ~/.cache/pip
 
 # copy custom files to nnUNet folder
 COPY nnUNetTrainerV2_focalLoss.py /tmp/nnUNetTrainerV2_focalLoss.py
