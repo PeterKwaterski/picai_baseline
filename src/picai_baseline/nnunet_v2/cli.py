@@ -10,6 +10,8 @@ from typing import Sequence
 DATASET_NAME = "Dataset220_PICAI"
 TRAINER = "nnUNetTrainerPICAI_FLCE"
 CONFIGURATION = "3d_fullres"
+PLANNER = "nnUNetPlannerResEncM"
+PLANS = "nnUNetResEncUNetMPlans"
 
 
 def configure_environment(workdir: Path) -> None:
@@ -46,7 +48,13 @@ def run(command: Sequence[str]) -> None:
 def plan(args: argparse.Namespace) -> None:
     workdir = Path(args.workdir).resolve()
     configure_environment(workdir)
-    command = ["nnUNetv2_plan_and_preprocess", "-d", dataset_id(args.dataset)]
+    command = [
+        "nnUNetv2_plan_and_preprocess",
+        "-d",
+        dataset_id(args.dataset),
+        "-pl",
+        args.planner,
+    ]
     if args.verify_dataset_integrity:
         command.append("--verify_dataset_integrity")
     run(command)
@@ -64,6 +72,8 @@ def train(args: argparse.Namespace) -> None:
         str(args.fold),
         "-tr",
         args.trainer,
+        "-p",
+        args.plans,
     ]
     if args.continue_training:
         command.append("--c")
@@ -86,6 +96,8 @@ def predict(args: argparse.Namespace) -> None:
         args.configuration,
         "-tr",
         args.trainer,
+        "-p",
+        args.plans,
         "-chk",
         args.checkpoint,
         "-f",
@@ -108,6 +120,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     plan_parser = subparsers.add_parser("plan", parents=[common])
     plan_parser.add_argument("--splits")
+    plan_parser.add_argument("--planner", default=PLANNER)
     plan_parser.add_argument("--verify-dataset-integrity", action="store_true")
     plan_parser.set_defaults(func=plan)
 
@@ -115,6 +128,7 @@ def build_parser() -> argparse.ArgumentParser:
     train_parser.add_argument("--fold", required=True)
     train_parser.add_argument("--configuration", default=CONFIGURATION)
     train_parser.add_argument("--trainer", default=TRAINER)
+    train_parser.add_argument("--plans", default=PLANS)
     train_parser.add_argument("--continue-training", action="store_true")
     train_parser.add_argument("--save-probabilities", action="store_true")
     train_parser.set_defaults(func=train)
@@ -124,6 +138,7 @@ def build_parser() -> argparse.ArgumentParser:
     predict_parser.add_argument("--output", required=True)
     predict_parser.add_argument("--configuration", default=CONFIGURATION)
     predict_parser.add_argument("--trainer", default=TRAINER)
+    predict_parser.add_argument("--plans", default=PLANS)
     predict_parser.add_argument("--checkpoint", default="checkpoint_best.pth")
     predict_parser.add_argument("--folds", nargs="+", default=["0", "1", "2", "3", "4"])
     predict_parser.add_argument("--save-probabilities", action="store_true")

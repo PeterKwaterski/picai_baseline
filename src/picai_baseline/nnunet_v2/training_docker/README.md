@@ -3,7 +3,7 @@
 This image is independent of the frozen nnU-Net v1 image. It uses:
 
 - PyTorch 2.3.0 and CUDA 12.1
-- `PeterKwaterski/nnUNet@v2.8.1-picai.1`
+- `PeterKwaterski/nnUNet@v2.8.1-picai.2`
 - `Dataset220_PICAI`
 - trainer `nnUNetTrainerPICAI_FLCE`
 

@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from picai_baseline.nnunet_v2.cli import dataset_id, install_splits
+from picai_baseline.nnunet_v2.cli import PLANNER, PLANS, build_parser, dataset_id, install_splits
 
 
 def test_dataset_id():
@@ -31,3 +31,10 @@ def test_install_splits_validates_shape(tmp_path: Path):
 
     with pytest.raises(ValueError):
         install_splits(tmp_path, "Dataset220_PICAI", source)
+
+
+def test_modern_resenc_defaults():
+    parser = build_parser()
+    assert parser.parse_args(["plan"]).planner == PLANNER
+    assert parser.parse_args(["train", "--fold", "0"]).plans == PLANS
+    assert parser.parse_args(["predict", "--input", "in", "--output", "out"]).plans == PLANS
