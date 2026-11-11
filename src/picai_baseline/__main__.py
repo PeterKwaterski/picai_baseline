@@ -68,6 +68,12 @@ if __name__ == '__main__':
                         help="Splits to save for cross-validation. Available: picai_pub_nnunet, picai_pubpriv_nnunet.")
     parser.add_argument("--task", type=str, default="Task2201_picai_baseline",
                         help="Task name (default: Task2201_picai_baseline)")
+    parser.add_argument(
+        "--annotations-subdir",
+        type=str,
+        default="resampled",
+        help="Subfolder under human_expert/ (resampled or binary_cspca_v1)",
+    )
     parser.set_defaults(func=prepare_data)
 
     parser = subparsers.add_parser('prepare_data_v2')
@@ -80,6 +86,12 @@ if __name__ == '__main__':
     parser.add_argument("--preprocessing_kwargs", type=str, required=False)
     parser.add_argument("--splits", type=str, default="picai_pub_nnunet")
     parser.add_argument("--task", type=str, default="Dataset220_PICAI")
+    parser.add_argument(
+        "--annotations-subdir",
+        type=str,
+        default="resampled",
+        help="Subfolder under human_expert/ (resampled or binary_cspca_v1)",
+    )
     parser.set_defaults(func=prepare_data_v2)
 
     try:
@@ -89,15 +101,18 @@ if __name__ == '__main__':
         print("Retrying with only the known arguments...")
         args, _ = argparser.parse_known_args()
 
-    args.func(
-        workdir=args.workdir,
-        inputdir=args.inputdir,
-        imagesdir=args.imagesdir,
-        labelsdir=args.labelsdir,
-        spacing=args.spacing,
-        matrix_size=args.matrix_size,
-        preprocessing_kwargs=args.preprocessing_kwargs,
-        splits=args.splits,
-        task=args.task,
-    )
+    call_kwargs = {
+        "workdir": args.workdir,
+        "inputdir": args.inputdir,
+        "imagesdir": args.imagesdir,
+        "labelsdir": args.labelsdir,
+        "spacing": args.spacing,
+        "matrix_size": args.matrix_size,
+        "preprocessing_kwargs": args.preprocessing_kwargs,
+        "splits": args.splits,
+        "task": args.task,
+    }
+    if hasattr(args, "annotations_subdir"):
+        call_kwargs["annotations_subdir"] = args.annotations_subdir
+    args.func(**call_kwargs)
     print("Finished.")

@@ -33,6 +33,7 @@ def prepare_data_v2(
     preprocessing_kwargs: Optional[Dict[str, Any]] = None,
     splits: str = "picai_pub_nnunet",
     task: str = DATASET_NAME,
+    annotations_subdir: str = "resampled",
 ):
     """Prepare PI-CAI using nnU-Net v2's DatasetXXX directory and metadata schema."""
     if not task.startswith("Dataset") or not task[7:10].isdigit():
@@ -53,6 +54,7 @@ def prepare_data_v2(
             preprocessing_kwargs=preprocessing_kwargs,
             splits=splits,
             task=task,
+            annotations_subdir=annotations_subdir,
         )
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.move(str(staging), str(destination))

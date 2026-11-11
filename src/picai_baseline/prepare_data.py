@@ -40,17 +40,30 @@ https://github.com/DIAGNijmegen/picai_baseline#prepare-data
 """
 
 
-def preprocess_picai_annotation(lbl: sitk.Image) -> sitk.Image:
-    """Binarize the granular ISUP ≥ 2 annotations"""
+PRE_BINARIZED_ANNOTATION_SUBDIRS = frozenset({"binary_cspca_v1"})
+
+
+def preprocess_picai_annotation_identity(lbl: sitk.Image) -> sitk.Image:
+    """Pass through pre-binarized training masks (uint8 0/1)."""
     lbl_arr = sitk.GetArrayFromImage(lbl)
+    lbl_new: sitk.Image = sitk.GetImageFromArray(lbl_arr.astype("uint8"))
+    lbl_new.CopyInformation(lbl)
+    return lbl_new
 
-    # convert granular PI-CAI csPCa annotation to binary csPCa annotation
-    lbl_arr = (lbl_arr >= 1).astype('uint8')
 
-    # convert label back to SimpleITK
+def preprocess_picai_annotation_granular(lbl: sitk.Image) -> sitk.Image:
+    """Binarize granular human-expert masks: ISUP ≥ 2 → csPCa."""
+    lbl_arr = sitk.GetArrayFromImage(lbl)
+    lbl_arr = (lbl_arr >= 2).astype("uint8")
     lbl_new: sitk.Image = sitk.GetImageFromArray(lbl_arr)
     lbl_new.CopyInformation(lbl)
     return lbl_new
+
+
+def annotation_preprocess_for_subdir(annotations_subdir: str):
+    if annotations_subdir in PRE_BINARIZED_ANNOTATION_SUBDIRS:
+        return preprocess_picai_annotation_identity
+    return preprocess_picai_annotation_granular
 
 
 def prepare_data(
@@ -63,6 +76,7 @@ def prepare_data(
     preprocessing_kwargs: Optional[Dict[str, Any]] = None,
     splits: str = "picai_pub_nnunet",
     task: str = "Task2201_picai_baseline",
+    annotations_subdir: str = "resampled",
 ):
 
     # prepare preprocessing kwargs
@@ -104,7 +118,11 @@ def prepare_data(
     labelsdir = Path(inputdir / labelsdir)
 
     # paths
-    annotations_dir = labelsdir / "csPCa_lesion_delineations/human_expert/resampled/"
+    annotations_dir = (
+        labelsdir / "csPCa_lesion_delineations/human_expert" / annotations_subdir
+    )
+    if not annotations_dir.is_dir():
+        raise FileNotFoundError(f"Annotations not found: {annotations_dir}")
     mha2nnunet_settings_path = workdir / "mha2nnunet_settings" / f"{task}.json"
     nnUNet_raw_data_path = workdir / "nnUNet_raw_data"
     nnUNet_task_dir = nnUNet_raw_data_path / task
@@ -145,7 +163,9 @@ def prepare_data(
 
         if not "options" in mha2nnunet_settings:
             mha2nnunet_settings["options"] = {}
-        mha2nnunet_settings["options"]["annotation_preprocess_func"] = preprocess_picai_annotation
+        mha2nnunet_settings["options"]["annotation_preprocess_func"] = (
+            annotation_preprocess_for_subdir(annotations_subdir)
+        )
 
         # prepare dataset in nnUNet format
         archive = MHA2nnUNetConverter(
@@ -188,6 +208,12 @@ if __name__ == "__main__":
                         help="Splits to save for cross-validation. Available: picai_pub_nnunet, picai_pubpriv_nnunet.")
     parser.add_argument("--task", type=str, default="Task2201_picai_baseline",
                         help="Task name (default: Task2201_picai_baseline)")
+    parser.add_argument(
+        "--annotations-subdir",
+        type=str,
+        default="resampled",
+        help="Subfolder under human_expert/ (resampled or binary_cspca_v1)",
+    )
     try:
         args = parser.parse_args()
     except Exception as e:
@@ -205,5 +231,6 @@ if __name__ == "__main__":
         preprocessing_kwargs=args.preprocessing_kwargs,
         splits=args.splits,
         task=args.task,
+        annotations_subdir=args.annotations_subdir,
     )
     print("Finished.")
