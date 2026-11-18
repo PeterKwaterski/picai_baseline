@@ -1,7 +1,7 @@
 FROM pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime@sha256:0279f7aa29974bf64e61d0ff6e979b41a249b3662a46e30778dbf80b8c99c361
 
 ARG NNUNET_GIT_URL=https://github.com/PeterKwaterski/nnUNet.git
-ARG NNUNET_GIT_REF=v2.8.1-picai.2
+ARG NNUNET_GIT_REF=v2.8.1-picai.3
 ARG PICAI_BASELINE_GIT_URL=https://github.com/PeterKwaterski/picai_baseline.git
 ARG PICAI_BASELINE_GIT_REF=nnunet-v2-migration
 
