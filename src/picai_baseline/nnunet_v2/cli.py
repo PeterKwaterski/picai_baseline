@@ -65,6 +65,10 @@ def plan(args: argparse.Namespace) -> None:
 
 def train(args: argparse.Namespace) -> None:
     configure_environment(Path(args.workdir).resolve())
+    if args.val_dense_preprocessed:
+        dense = Path(args.val_dense_preprocessed).resolve()
+        os.environ["PICAI_VAL_DENSE_NNUNET_PREPROCESSED"] = str(dense)
+        print(f"Dense validation preprocessed base: {dense}", flush=True)
     command = [
         "nnUNetv2_train",
         dataset_id(args.dataset),
@@ -131,6 +135,14 @@ def build_parser() -> argparse.ArgumentParser:
     train_parser.add_argument("--plans", default=PLANS)
     train_parser.add_argument("--continue-training", action="store_true")
     train_parser.add_argument("--save-probabilities", action="store_true")
+    train_parser.add_argument(
+        "--val-dense-preprocessed",
+        default=None,
+        help=(
+            "Path to nnUNet_preprocessed/<dataset> for dense validation "
+            "(sets PICAI_VAL_DENSE_NNUNET_PREPROCESSED)"
+        ),
+    )
     train_parser.set_defaults(func=train)
 
     predict_parser = subparsers.add_parser("predict", parents=[common])

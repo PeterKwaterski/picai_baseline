@@ -92,6 +92,11 @@ if __name__ == '__main__':
         default="resampled",
         help="Subfolder under human_expert/ (resampled or binary_cspca_v1)",
     )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Clear existing nnU-Net raw staging for this task and rebuild",
+    )
     parser.set_defaults(func=prepare_data_v2)
 
     try:
@@ -114,5 +119,7 @@ if __name__ == '__main__':
     }
     if hasattr(args, "annotations_subdir"):
         call_kwargs["annotations_subdir"] = args.annotations_subdir
+    if hasattr(args, "force"):
+        call_kwargs["force"] = args.force
     args.func(**call_kwargs)
     print("Finished.")

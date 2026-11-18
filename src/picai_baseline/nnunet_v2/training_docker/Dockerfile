@@ -18,7 +18,7 @@ RUN git clone --depth 1 --branch "${NNUNET_GIT_REF}" "${NNUNET_GIT_URL}" /opt/nn
     git clone --depth 1 --branch "${PICAI_BASELINE_GIT_REF}" "${PICAI_BASELINE_GIT_URL}" /opt/picai_baseline && \
     python -m pip install --no-cache-dir -c /tmp/constraints.txt -e /opt/nnUNet -e /opt/picai_baseline && \
     python -m pip check && \
-    python -c "from nnunetv2.training.nnUNetTrainer.variants.loss.nnUNetTrainerPICAI import nnUNetTrainerPICAI_FLCE" && \
+    python -c "from nnunetv2.training.nnUNetTrainer.variants.loss.nnUNetTrainerPICAI import nnUNetTrainerPICAI_FLCE, nnUNetTrainerPICAI_FLCE_SparseSupervision" && \
     chmod +x /opt/picai_baseline/src/picai_baseline/nnunet_v2/cli.py && \
     ln -s /opt/picai_baseline/src/picai_baseline/nnunet_v2/cli.py /usr/local/bin/picai-nnunet-v2
 

@@ -66,6 +66,20 @@ def annotation_preprocess_for_subdir(annotations_subdir: str):
     return preprocess_picai_annotation_granular
 
 
+def _clear_nnunet_prepare_paths(workdir: Path, task: str) -> None:
+    import shutil
+
+    nnUNet_raw_data_path = workdir / "nnUNet_raw_data"
+    nnUNet_task_dir = nnUNet_raw_data_path / task
+    nnUNet_raw_task = workdir / "nnUNet_raw" / task
+    mha2nnunet_settings_path = workdir / "mha2nnunet_settings" / f"{task}.json"
+    for path in (nnUNet_task_dir, nnUNet_raw_task, mha2nnunet_settings_path):
+        if path.is_dir():
+            shutil.rmtree(path)
+        elif path.is_file():
+            path.unlink()
+
+
 def prepare_data(
     workdir: Union[Path, str] = "/workdir",
     inputdir: Union[Path, str] = "/input",
@@ -77,6 +91,7 @@ def prepare_data(
     splits: str = "picai_pub_nnunet",
     task: str = "Task2201_picai_baseline",
     annotations_subdir: str = "resampled",
+    force: bool = False,
 ):
 
     # prepare preprocessing kwargs
@@ -116,6 +131,9 @@ def prepare_data(
     inputdir = Path(inputdir)
     imagesdir = Path(inputdir / imagesdir)
     labelsdir = Path(inputdir / labelsdir)
+
+    if force:
+        _clear_nnunet_prepare_paths(workdir, task)
 
     # paths
     annotations_dir = (
