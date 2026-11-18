@@ -41,10 +41,11 @@ https://github.com/DIAGNijmegen/picai_baseline#prepare-data
 
 
 PRE_BINARIZED_ANNOTATION_SUBDIRS = frozenset({"binary_cspca_v1"})
+PRE_BINARIZED_ANNOTATION_SUBDIR_PREFIXES = ("binary_cspca_v1_sparse_p",)
 
 
 def preprocess_picai_annotation_identity(lbl: sitk.Image) -> sitk.Image:
-    """Pass through pre-binarized training masks (uint8 0/1)."""
+    """Pass through pre-binarized masks, including sparse 0/1/ignore labels."""
     lbl_arr = sitk.GetArrayFromImage(lbl)
     lbl_new: sitk.Image = sitk.GetImageFromArray(lbl_arr.astype("uint8"))
     lbl_new.CopyInformation(lbl)
@@ -61,7 +62,10 @@ def preprocess_picai_annotation_granular(lbl: sitk.Image) -> sitk.Image:
 
 
 def annotation_preprocess_for_subdir(annotations_subdir: str):
-    if annotations_subdir in PRE_BINARIZED_ANNOTATION_SUBDIRS:
+    if (
+        annotations_subdir in PRE_BINARIZED_ANNOTATION_SUBDIRS
+        or annotations_subdir.startswith(PRE_BINARIZED_ANNOTATION_SUBDIR_PREFIXES)
+    ):
         return preprocess_picai_annotation_identity
     return preprocess_picai_annotation_granular
 

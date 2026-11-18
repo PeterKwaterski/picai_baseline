@@ -44,7 +44,17 @@ def prepare_data_v2(
     destination = workdir / "nnUNet_raw" / task
     staging = workdir / "nnUNet_raw_data" / task
 
-    if force or not destination.exists():
+    labels_tr = destination / "labelsTr"
+    labels_in_destination = (
+        len(list(labels_tr.glob("*.nii.gz"))) if labels_tr.is_dir() else 0
+    )
+    needs_conversion = (
+        force
+        or not destination.exists()
+        or labels_in_destination == 0
+    )
+
+    if needs_conversion:
         prepare_data(
             workdir=workdir,
             inputdir=inputdir,
